@@ -4,7 +4,7 @@
 %%% @doc
 %%%
 %%% @end
-%%% Created : 08. 三月 2016 16:47
+%%% Created : 08. ÈýÔÂ 2016 16:47
 %%%-------------------------------------------------------------------
 -module(ali_sms).
 -author("chenshaobo0428").
@@ -33,15 +33,14 @@ gen_ali_sms_url(PhoneNumber,SMSParam,SignName,TemplateCode)->
     [{"rec_num", to_bin(PhoneNumber)}, {"sms_param", to_bin(SMSParam)},
         {"sms_free_sign_name", to_bin(SignName)}, {"sms_template_code", TemplateCode},
         {"timestamp", to_bin(format_date())}] ++ ?DEFAULT_PARAMS,
-    lager:info("~p",[format_date()]),
 %%     按照字母排序
     SortList = lists:sort(fun({Key1, _}, {Key2, _}) ->
         Key1 < Key2
     end, Params),
     MD5Source = SecretKey ++ lists:flatten([io_lib:format("~s~s", [Key, Val]) || {Key, Val} <- SortList]) ++ SecretKey,
-    SignMd5 = to_bin(string:to_upper(mpr_utils:to_list(mpr_utils:to_md5(MD5Source)))),
+    SignMd5 = to_bin(string:to_upper(to_list(mpr_utils:to_md5(MD5Source)))),
 %%
-    RequestQuery = lists:flatten([io_lib:format("~s=~s&", [Key, http_uri:encode(mpr_utils:to_list(Val))]) || {Key, Val} <- [{"sign", SignMd5} | SortList]]),
+    RequestQuery = lists:flatten([io_lib:format("~s=~s&", [Key, http_uri:encode(to_list(Val))]) || {Key, Val} <- [{"sign", SignMd5} | SortList]]),
     ?BASE_URL ++ RequestQuery.
 
 
@@ -68,4 +67,35 @@ to_bin(List) when is_list(List) ->
 to_bin(Binary) when is_binary(Binary) ->
     Binary;
 to_bin(_) ->
+    erlang:throw(error_type).
+
+
+    % return value is binary
+to_md5(Value) ->
+    MD5Str = hex(erlang:md5(Value)),
+    to_bin(MD5Str).
+
+hex(Bin) when is_binary(Bin) ->
+    MD5Str = hex(to_list(Bin)),
+    to_bin(MD5Str);
+hex(L) when is_list(L) ->
+    lists:flatten([hex(I) || I <- L]);
+hex(I) when I > 16#f ->
+    [hex0((I band 16#f0) bsr 4), hex0((I band 16#0f))];
+hex(I) -> [$0, hex0(I)].
+
+hex0(10) -> $a;
+hex0(11) -> $b;
+hex0(12) -> $c;
+hex0(13) -> $d;
+hex0(14) -> $e;
+hex0(15) -> $f;
+hex0(I) -> $0 + I.
+
+
+to_list(Atom) when is_atom(Atom) -> erlang:atom_to_list(Atom);
+to_list(Int) when is_integer(Int) -> erlang:integer_to_list(Int);
+to_list(List) when is_list(List) -> List;
+to_list(Bin) when is_binary(Bin) -> erlang:binary_to_list(Bin);
+to_list(_) ->
     erlang:throw(error_type).
