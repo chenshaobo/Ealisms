@@ -38,7 +38,7 @@ gen_ali_sms_url(PhoneNumber,SMSParam,SignName,TemplateCode)->
         Key1 < Key2
     end, Params),
     MD5Source = SecretKey ++ lists:flatten([io_lib:format("~s~s", [Key, Val]) || {Key, Val} <- SortList]) ++ SecretKey,
-    SignMd5 = to_bin(string:to_upper(to_list(mpr_utils:to_md5(MD5Source)))),
+    SignMd5 = to_bin(string:to_upper(to_list(to_md5(MD5Source)))),
 %%
     RequestQuery = lists:flatten([io_lib:format("~s=~s&", [Key, http_uri:encode(to_list(Val))]) || {Key, Val} <- [{"sign", SignMd5} | SortList]]),
     ?BASE_URL ++ RequestQuery.
@@ -72,12 +72,11 @@ to_bin(_) ->
 
     % return value is binary
 to_md5(Value) ->
-    MD5Str = hex(erlang:md5(Value)),
-    to_bin(MD5Str).
+    hex(erlang:md5(Value)).
 
 hex(Bin) when is_binary(Bin) ->
     MD5Str = hex(to_list(Bin)),
-    to_bin(MD5Str);
+    MD5Str;
 hex(L) when is_list(L) ->
     lists:flatten([hex(I) || I <- L]);
 hex(I) when I > 16#f ->
