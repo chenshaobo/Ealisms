@@ -11,7 +11,6 @@
 
 %% API
 -export([gen_ali_sms_url/4]).
--export([format_date/0]).
 -define(DEFAULT_PARAMS,[
     {"method",<<"alibaba.aliqin.fc.sms.num.send">>},
     {"app_key",<<"YOUR KEY">>},
@@ -46,9 +45,9 @@ gen_ali_sms_url(PhoneNumber,SMSParam,SignName,TemplateCode)->
 
 -define(FILL_ZERO(X) ,case X > 9 of
                          true ->
-                             erlang:integer_to_list(X);
+                             to_list(X);
                          false ->
-                             "0"++ erlang:integer_to_list(X)
+                             "0"++ 	to_list(X)
                      end).
 
 format_date()->
@@ -72,13 +71,11 @@ to_bin(_) ->
 
     % return value is binary
 to_md5(Value) ->
-    hex(erlang:md5(Value)).
+    to_hex(to_list(erlang:md5(Value))).
 
-hex(Bin) when is_binary(Bin) ->
-    MD5Str = hex(to_list(Bin)),
-    MD5Str;
-hex(L) when is_list(L) ->
-    lists:flatten([hex(I) || I <- L]);
+to_hex(L) when is_list(L) ->
+    lists:flatten([hex(I) || I <- L]).
+    
 hex(I) when I > 16#f ->
     [hex0((I band 16#f0) bsr 4), hex0((I band 16#0f))];
 hex(I) -> [$0, hex0(I)].
